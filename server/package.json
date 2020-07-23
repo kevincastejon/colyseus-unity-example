@@ -1,0 +1,36 @@
+{
+  "name": "colyseus-unity-example-Chat",
+  "version": "1.0.0",
+  "description": "Sample game using Colyseus.io server and Unity3D client",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "ts-node ./index.ts",
+    "schema-codegen": "schema-codegen ./src/Schemas.ts --csharp --output ../Assets/Scripts/Network/Serialization/",
+    "loadtest": "colyseus-loadtest loadtest/example.ts --room my_room --numClients 2",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/colyseus/create-colyseus/issues"
+  },
+  "homepage": "https://github.com/colyseus/create-colyseus#readme",
+  "devDependencies": {
+    "@colyseus/loadtest": "^0.13.1",
+    "@types/cors": "^2.8.6",
+    "@types/express": "^4.17.1",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "eslint-config-google": "^0.14.0",
+    "ts-node": "^8.1.0",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {
+    "cannon-es": "^0.15.0",
+    "colyseus": "^0.13.0",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "express-jwt": "^5.3.1"
+  }
+}
