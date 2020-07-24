@@ -7,6 +7,6 @@
     "strictNullChecks": false,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "noImplicitAny": false
+    "noImplicitAny": true
   }
 }

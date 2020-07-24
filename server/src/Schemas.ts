@@ -40,7 +40,7 @@ class PlayerData extends EntityData {
   @type('uint8')
   emote: number = 0;
 
-  // Used only server-side for conveninence, not synchronized with clients
+  // Used only server-side for convenience, not synchronized with clients
   ownedBall : string = '';
 }
 class BallData extends EntityData {

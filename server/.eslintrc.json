@@ -17,6 +17,8 @@
     "rules": {
       "require-jsdoc": "off",
       "max-len": "off",
-      "guard-for-in": "off"
+      "guard-for-in": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error"]
     }
 }
