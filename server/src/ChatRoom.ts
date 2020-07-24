@@ -1,6 +1,7 @@
 import {Room, Client, generateId} from 'colyseus';
-import {State, PlayerData, Vect3, Quat} from './Schemas';
+import {State, PlayerData, BallData, Vect3, Quat} from './Schemas';
 import {World, Body, Vec3, Quaternion, Sphere, Plane, Material, ContactMaterial, Transform, Mat3} from 'cannon-es';
+const ballTakeDistance = 2;
 const lightSwitchArea = {
   minX: -21.5,
   maxX: -18.5,
@@ -14,81 +15,144 @@ const doorArea = {
   maxX: -32,
   minZ: 1,
   maxZ: 6.5,
-  minRY: -Math.PI,
-  maxRY: Math.PI,
+};
+const ballSpawnerArea = {
+  minX: -42,
+  maxX: -40,
+  minZ: 3,
+  maxZ: 5,
+  minRY: (Math.PI/180)*75,
+  maxRY: (Math.PI/180)*125,
 };
 const ballRoomArea = {
   minX: -50.8,
   maxX: -35.8,
   minZ: -5,
   maxZ: 13,
-  minRY: -Math.PI,
-  maxRY: Math.PI,
 };
 export class ChatRoom extends Room {
   world:any;
-  sphereBody:any;
+  spheres:object;
+  groundMaterial:Material;
+  northWallMaterial: Material;
+  southWallMaterial: Material;
+  eastWallMaterial: Material;
+  westWallMaterial: Material;
+
+  // Room created
   onCreate(options: any) {
+    this.spheres = {};
+    // Create a CannonJS 3d physic world for the "balls area"
     this.world = new World();
     this.world.gravity.set(0, -9.82, 0); // m/s²
-    const radius = 0.20; // m
-    const sphereMaterial = new Material();
-    this.sphereBody = new Body({
-      mass: 5, // kg
-      position: new Vec3(-43, 4, 2.5), // m
-      shape: new Sphere(radius),
-      material: sphereMaterial,
-    });
-    this.world.addBody(this.sphereBody);
-    // Create a plane
-    const groundMaterial = new Material();
-    const groundBody = new Body({
-      mass: 0, // mass == 0 makes the body static
-      material: groundMaterial,
-    });
-    const groundShape = new Plane();
-    groundBody.addShape(groundShape);
-    groundBody.quaternion.setFromAxisAngle(new Vec3(1, 0, 0), -Math.PI/2);
-    this.world.addBody(groundBody);
-    const matBallground = new ContactMaterial(groundMaterial, sphereMaterial, {friction: 1, restitution: 0.5});
-    this.world.addContactMaterial(matBallground);
-    this.setMetadata({
-      name: options.name,
-    });
+
+    // Create a floor for the "balls area"
+    this.createFloor();
+
+    // Create walls for the "balls area"
+    this.createWalls();
+
+    // configuring room
+    this.setMetadata({name: options.name});
     this.setPatchRate(1000 / 20);
     this.setSimulationInterval((dt) => this.update(dt));
+
+    // Setting inital state
     const state:State = new State();
     this.setState(state);
-    this.refreshBallSpacialization();
+
+    // Listening to client's messages
     this.onMessage('input', (client, input)=>this.onPlayerMove(client, input));
     this.onMessage('emote', (client, emote)=>this.onPlayerEmote(client, emote));
-    this.onMessage('chat', (client, msg)=>this.onPlayerChat(client, msg));
+    // this.onMessage('chat', (client, msg)=>this.onPlayerChat(client, msg));
     this.onMessage('interact', (client)=>this.onPlayerInteract(client));
   }
 
+  // Player joined the game
   onJoin(client: Client, options: any) {
     console.log('player', client.id, 'connected');
     const newPlayer:PlayerData = new PlayerData();
     newPlayer.color=options.color;
     newPlayer.name=options.username;
     this.state.players[client.sessionId] = newPlayer;
-    // this.sphereBody.applyLocalImpulse(new Vec3(10, 0, 0), new Vec3(0, 0, 0));
   }
 
+  // Player leaved the game
   onLeave(client: Client, consented: boolean) {
     console.log('player', client.id, 'leaved');
     delete this.state.players[client.sessionId];
   }
 
+  // Room is closing
   onDispose() {
     console.log('last player left, room closing...');
   }
 
   update(delta:number) {
+    // Update 3D world and synchronize balls state from it
     this.world.step(delta/1000);
-    this.refreshBallSpacialization();
+    this.refreshBallsSpacialization();
   }
 
+  createFloor() {
+    this.groundMaterial = new Material();
+    const groundBody = new Body({
+      mass: 0,
+      material: this.groundMaterial,
+    });
+    const groundShape = new Plane();
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromAxisAngle(new Vec3(1, 0, 0), -Math.PI/2);
+    this.world.addBody(groundBody);
+  }
+
+  createWalls() {
+    // Create north wall
+    this.northWallMaterial = new Material();
+    const northWallBody = new Body({
+      mass: 0,
+      material: this.northWallMaterial,
+      position: new Vec3(0, 0, ballRoomArea.minZ),
+    });
+    const northWallShape = new Plane();
+    northWallBody.addShape(northWallShape);
+    this.world.addBody(northWallBody);
+    // Create south wall
+    this.southWallMaterial = new Material();
+    const southWallBody = new Body({
+      mass: 0,
+      material: this.southWallMaterial,
+      position: new Vec3(0, 0, ballRoomArea.maxZ),
+    });
+    const southWallShape = new Plane();
+    southWallBody.addShape(southWallShape);
+    southWallBody.quaternion.setFromAxisAngle(new Vec3(0, 1, 0), Math.PI);
+    this.world.addBody(southWallBody);
+    // Create east wall
+    this.eastWallMaterial = new Material();
+    const eastWallBody = new Body({
+      mass: 0,
+      material: this.eastWallMaterial,
+      position: new Vec3(ballRoomArea.minX, 0, 0),
+    });
+    const eastWallShape = new Plane();
+    eastWallBody.addShape(eastWallShape);
+    eastWallBody.quaternion.setFromAxisAngle(new Vec3(0, 1, 0), -3*(Math.PI/2));
+    this.world.addBody(eastWallBody);
+    // Create west wall
+    this.westWallMaterial = new Material();
+    const westWallBody = new Body({
+      mass: 0,
+      material: this.westWallMaterial,
+      position: new Vec3(ballRoomArea.maxX, 0, 0),
+    });
+    const westWallShape = new Plane();
+    westWallBody.addShape(westWallShape);
+    westWallBody.quaternion.setFromAxisAngle(new Vec3(0, 1, 0), -Math.PI/2);
+    this.world.addBody(westWallBody);
+  }
+
+  // Player sent its position and rotation (see why not authoritative movements)
   onPlayerMove(client:Client, playerInput) {
     const player = this.state.players[client.sessionId];
     if (playerInput.position.x != player.position.x ||
@@ -113,77 +177,211 @@ export class ChatRoom extends Room {
       rot.w = playerInput.rotation.w;
       player.rotation = rot;
     }
+    if (player.ownedBall && !this.isPlayerInArea(player, ballRoomArea)) {
+      delete this.state.balls[player.ownedBall];
+      delete this.spheres[player.ownedBall];
+      player.ownedBall='';
+    }
   }
+
+  // Player change its emote
   onPlayerEmote(client:Client, emote) {
     const player = this.state.players[client.sessionId];
     player.emote = emote;
   }
-  onPlayerChat(client:Client, msg) {
-    const player = this.state.players[client.sessionId];
-    player.msg = msg;
-  }
+  // Player pressed "interaction" input ("E" for keyboards "A" for gamepads)
   onPlayerInteract(client:Client) {
+    let validation: boolean;
+
+    //  Validate and execute interaction if validated
+    //  if not validated it skips to the next possible interaction
+
+    // Spawning ball interaction
+    validation = this.trySpawnBall(client);
+    if (validation) return;
+    // Catching ball interaction
+    validation = this.tryCatchBall(client);
+    if (validation) return;
+    // Operating lights interaction
+    validation = this.tryOperateLights(client);
+    if (validation) return;
+    // Operating doors interaction
+    validation = this.tryOperateDoors(client);
+    if (validation) return;
+    // Throwing ball interaction
+    validation = this.tryThrowBall(client);
+    if (validation) return;
+  }
+  tryCatchBall(client: Client) {
     const player:PlayerData = this.state.players[client.sessionId];
-    if (this.state.ball.owner === client.sessionId) {
-      this.sphereBody.position=new Vec3(player.position.x, player.position.y, player.position.z);
-      this.sphereBody.quaternion = new Quaternion(player.rotation.x, player.rotation.y, player.rotation.z, player.rotation.w);
-      this.world.addBody(this.sphereBody);
-      const forward = new Vec3(0, 0, 1);
-      const dir = new Vec3(0, 0, 0);
-      this.sphereBody.quaternion.vmult(forward, dir);
-      dir.scale(10, dir);
-      dir.y=5;
-      this.sphereBody.velocity = dir;
-      this.state.ball.owner = '';
-    } else if (this.isPlayerInArea(player, lightSwitchArea)) {
-      this.state.lights.on = !this.state.lights.on;
-    } else if (this.isPlayerInArea(player, doorArea)) {
-      this.state.doors.open = !this.state.doors.open;
-    } else if (this.state.ball.owner === '' && this.isPlayerAround(player, this.sphereBody, 6)) {
-      this.world.removeBody(this.sphereBody);
-      this.state.ball.owner = client.sessionId;
+    // If player already got a ball then skip
+    if (player.ownedBall !== '') {
+      return false;
+    }
+    const reachableClosestBallId = this.getReachableClosestBallId(player);
+    // If no reachable ball then skip
+    if (!reachableClosestBallId) {
+      return false;
+    }
+    // Player is catching a ball
+    this.world.removeBody(this.spheres[reachableClosestBallId]);
+    this.state.balls[reachableClosestBallId].owner = client.sessionId;
+    player.ownedBall = reachableClosestBallId;
+    return true;
+  }
+  tryOperateLights(client: Client) {
+    const player:PlayerData = this.state.players[client.sessionId];
+    // If player location/rotation is wrong then skip
+    if (!this.isPlayerInArea(player, lightSwitchArea)) {
+      return false;
+    }
+    // Player is operating lightswitch
+    this.state.lights.on = !this.state.lights.on;
+    return true;
+  }
+  tryOperateDoors(client: Client) {
+    const player:PlayerData = this.state.players[client.sessionId];
+    // If player location/rotation is wrong then skip
+    if (!this.isPlayerInArea(player, doorArea)) {
+      return false;
+    }
+    // Player is operating the doors
+    this.state.doors.open = !this.state.doors.open;
+    return true;
+  }
+  trySpawnBall(client: Client) {
+    const player:PlayerData = this.state.players[client.sessionId];
+    // If player location/rotation is wrong then skip
+    if (!this.isPlayerInArea(player, ballSpawnerArea)) {
+      return false;
+    }
+    // Player is spawning a ball
+    // Create a CannonJS physic sphere object
+    const radius = 0.20;
+    const sphereMaterial = new Material();
+    const newBallId = generateId();
+    this.spheres[newBallId] = new Body({
+      mass: 5,
+      position: new Vec3(-42.5+Math.random(), 2.5+Math.random(), 4+Math.random()), // Locate the new ball into the "balls area"
+      shape: new Sphere(radius),
+      material: sphereMaterial,
+    });
+    this.world.addBody(this.spheres[newBallId]);
+    // Create ContactMaterial for ground
+    const groundContMat = new ContactMaterial(this.groundMaterial, sphereMaterial, {friction: 1, restitution: 0.7});
+    this.world.addContactMaterial(groundContMat);
+    // Create ContactMaterial for walls
+    const nWallContMat = new ContactMaterial(this.northWallMaterial, sphereMaterial, {friction: 1, restitution: 0.7});
+    this.world.addContactMaterial(nWallContMat);
+    const sWallContMat = new ContactMaterial(this.southWallMaterial, sphereMaterial, {friction: 1, restitution: 0.7});
+    this.world.addContactMaterial(sWallContMat);
+    const eWallContMat = new ContactMaterial(this.eastWallMaterial, sphereMaterial, {friction: 1, restitution: 0.7});
+    this.world.addContactMaterial(eWallContMat);
+    const wWallContMat = new ContactMaterial(this.westWallMaterial, sphereMaterial, {friction: 1, restitution: 0.7});
+    this.world.addContactMaterial(wWallContMat);
+    // Create the BallData object to synchonize room state with 3D world
+    const newBallData = new BallData();
+    newBallData.position.x = this.spheres[newBallId].position.x;
+    newBallData.position.y = this.spheres[newBallId].position.y;
+    newBallData.position.z = this.spheres[newBallId].position.z;
+    newBallData.rotation.x = this.spheres[newBallId].quaternion.x;
+    newBallData.rotation.y = this.spheres[newBallId].quaternion.y;
+    newBallData.rotation.z = this.spheres[newBallId].quaternion.z;
+    newBallData.rotation.w = this.spheres[newBallId].quaternion.w;
+    this.state.balls[newBallId] = newBallData;
+    return true;
+  }
+  tryThrowBall(client: Client) {
+    const player:PlayerData = this.state.players[client.sessionId];
+    // If player has no ball in hand then skip
+    if (player.ownedBall === '') {
+      return false;
+    }
+    // Player is throwing a ball
+    const ballData:BallData = this.state.balls[player.ownedBall];
+    const sphere:Body = this.spheres[player.ownedBall];
+    sphere.position=new Vec3(player.position.x, player.position.y, player.position.z);
+    sphere.quaternion = new Quaternion(player.rotation.x, player.rotation.y, player.rotation.z, player.rotation.w);
+    this.world.addBody(sphere);
+    const forward = new Vec3(0, 0, 1);
+    const dir = new Vec3(0, 0, 0);
+    sphere.quaternion.vmult(forward, dir);
+    dir.scale(10, dir);
+    dir.y=5;
+    sphere.velocity = dir;
+    ballData.owner = '';
+    player.ownedBall = '';
+    return true;
+  }
+
+  // Return the player's reachable free closest ball id
+  getReachableClosestBallId(player: PlayerData) {
+    let closestSphereId;
+    let minDistance=Number.POSITIVE_INFINITY;
+    for (const id in this.spheres) {
+      if (this.spheres.hasOwnProperty(id)) {
+        const sphere = this.spheres[id];
+        const ball = this.state.balls[id];
+        if (ball.owner === '') {
+          const currentDistance = sphere.position.distanceTo(new Vec3(player.position.x, player.position.y, player.position.z));
+          if (currentDistance<minDistance) {
+            minDistance = currentDistance;
+            closestSphereId = id;
+          }
+        }
+      }
+    }
+    // If the closest ball is not reachable then return null
+    if (minDistance <= ballTakeDistance) {
+      return closestSphereId;
+    } else {
+      return null;
     }
   }
 
-  refreshBallSpacialization() {
-    if (this.state.ball.position.x != this.sphereBody.position.x ||
-    this.state.ball.position.y != this.sphereBody.position.y ||
-    this.state.ball.position.z != this.sphereBody.position.z
-    ) {
-      const ballPos = new Vect3();
-      ballPos.x = this.sphereBody.position.x;
-      ballPos.y = this.sphereBody.position.y;
-      ballPos.z = this.sphereBody.position.z;
-      this.state.ball.position=ballPos;
+  // Synchronize the 3D physic spheres objects with the balls state
+  refreshBallsSpacialization() {
+    for (const id in this.spheres) {
+      if (this.spheres.hasOwnProperty(id)) {
+        const sphere = this.spheres[id];
+        const balldata = this.state.balls[id];
+        if (balldata.position.x != sphere.position.x ||
+        balldata.position.y != sphere.position.y ||
+        balldata.position.z != sphere.position.z
+        ) {
+          const ballPos = new Vect3();
+          ballPos.x = sphere.position.x;
+          ballPos.y = sphere.position.y;
+          ballPos.z = sphere.position.z;
+          balldata.position=ballPos;
+        }
+        if (balldata.rotation.x != sphere.position.x ||
+        balldata.rotation.y != sphere.position.y ||
+        balldata.rotation.z != sphere.position.z ||
+        balldata.rotation.w != sphere.position.w
+        ) {
+          const ballRot = new Quat();
+          ballRot.x = sphere.quaternion.x;
+          ballRot.y = sphere.quaternion.y;
+          ballRot.z = sphere.quaternion.z;
+          ballRot.w = sphere.quaternion.w;
+          balldata.rotation=ballRot;
+        }
+      }
     }
-    if (this.state.ball.rotation.x != this.sphereBody.position.x ||
-    this.state.ball.rotation.y != this.sphereBody.position.y ||
-    this.state.ball.rotation.z != this.sphereBody.position.z ||
-    this.state.ball.rotation.w != this.sphereBody.position.w
-    ) {
-      const ballRot = new Quat();
-      ballRot.x = this.sphereBody.quaternion.x;
-      ballRot.y = this.sphereBody.quaternion.y;
-      ballRot.z = this.sphereBody.quaternion.z;
-      ballRot.w = this.sphereBody.quaternion.w;
-      this.state.ball.rotation=ballRot;
-    }
-    // console.log(this.sphereBody.position);
-    // console.log(this.sphereBody.quaternion);
   }
 
+  // Check if a player's location and rotation fits the "area" requirements
   isPlayerInArea(player:PlayerData, area) {
     const quat = new Quaternion(player.rotation.x, player.rotation.y, player.rotation.z, player.rotation.w);
     const rotation = new Vec3(0, 0, 0);
     quat.toEuler(rotation);
     const xValid:boolean = player.position.x > area.minX && player.position.x < area.maxX;
     const zValid:boolean = player.position.z > area.minZ && player.position.z < area.maxZ;
-    const ryValid:boolean = rotation.y > area.minRY && rotation.y < area.maxRY;
+    let ryValid:boolean=true;
+    if (area.minRY != undefined) {
+      ryValid = rotation.y > area.minRY && rotation.y < area.maxRY;
+    }
     return (xValid && zValid && ryValid);
-  }
-
-  isPlayerAround(player:PlayerData, body, radius:number) {
-    // console.log(body.position.distanceTo(new Vec3(player.position.x, player.position.y, player.position.z)));
-    return (body.position.distanceTo(new Vec3(player.position.x, player.position.y, player.position.z))<radius);
   }
 }

@@ -59,4 +59,8 @@ public class Avatar : MonoBehaviour
     {
         skinController.ChangeMaterialSettings(index);
     }
+    public void PlayThrowBallSound()
+    {
+        soundsPlayer.Play(1);
+    }
 }

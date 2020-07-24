@@ -17,7 +17,7 @@ public class State : Schema {
 	[Type(2, "ref", typeof(DoorData))]
 	public DoorData doors = new DoorData();
 
-	[Type(3, "ref", typeof(BallData))]
-	public BallData ball = new BallData();
+	[Type(3, "map", typeof(MapSchema<BallData>))]
+	public MapSchema<BallData> balls = new MapSchema<BallData>();
 }
 

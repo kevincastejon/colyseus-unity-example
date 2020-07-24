@@ -4,6 +4,7 @@ using TMPro;
 public class Player : MonoBehaviour
 {
     //private PlayerData state;
+    private GameObject camera;
     private TextMeshProUGUI playerName;
     private CharacterSkinController skinController;
     private Rigidbody rigidBody;
@@ -15,11 +16,16 @@ public class Player : MonoBehaviour
 
     void Awake()
     {
+        camera = GameObject.Find("Main Camera").gameObject;
         playerName = transform.Find("Canvas").Find("Name").GetComponent<TextMeshProUGUI>();
         skinController = GetComponent<CharacterSkinController>();
         animator = GetComponent<Animator>();
         rigidBody = GetComponent<Rigidbody>();
         soundsPlayer = transform.Find("Sounds").GetComponent<SoundsPlayer>();
+    }
+    private void Update()
+    {
+        playerName.transform.rotation = Quaternion.LookRotation(playerName.transform.position - camera.transform.position);
     }
     void FixedUpdate()
     {
@@ -61,6 +67,7 @@ public class Player : MonoBehaviour
     public void SetColor(int color)
     {
         skinController.ChangeMaterialSettings(color == 0 ? 0 : 2);
+        playerName.color = color == 0 ? Color.red : Color.blue;
     }
     public int GetColor()
     {
@@ -74,5 +81,9 @@ public class Player : MonoBehaviour
     public int GetEmote()
     {
         return emote;
+    }
+    public void PlayThrowBallSound()
+    {
+        soundsPlayer.Play(1);
     }
 }

@@ -21,7 +21,7 @@ class Quat extends Schema {
   z: number = 0;
 
   @type('float32')
-  w: number = 0;
+  w: number = 1;
 }
 class EntityData extends Schema {
   @type(Vect3)
@@ -40,8 +40,8 @@ class PlayerData extends EntityData {
   @type('uint8')
   emote: number = 0;
 
-  @type('string')
-  msg: string = '';
+  // Used only server-side for conveninence, not synchronized with clients
+  ownedBall : string = '';
 }
 class BallData extends EntityData {
   @type('string')
@@ -65,7 +65,7 @@ class State extends Schema {
   @type(DoorData)
   doors = new DoorData();
 
-  @type(BallData)
-  ball = new BallData();
+  @type({map: BallData})
+  balls = new MapSchema<BallData>();
 }
 export {EntityData, PlayerData, BallData, LightData, DoorData, Vect3, Quat, State};

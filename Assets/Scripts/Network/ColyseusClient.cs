@@ -51,7 +51,7 @@ public class ColyseusClient : MonoBehaviour
     void Start()
     {
         gameManager = GameObject.Find("Map").GetComponent<GameManager>();
-        //gameManager.gameObject.SetActive(false);
+        gameManager.gameObject.SetActive(false);
         menu = GameObject.Find("Menu").GetComponent<Menu>();
         menu.onJoinRoom.AddListener((string roomId) => { JoinRoom(roomId); });
         menu.onChangeUsername.AddListener((string newUsername) => { SetUserName(newUsername); });
@@ -63,7 +63,7 @@ public class ColyseusClient : MonoBehaviour
 
     void Connect()
     {
-        string endpoint = "ws://localhost:2567";
+        string endpoint = "ws://vps735892.ovh.net:2567";
         Debug.Log("Connecting to " + endpoint);
         client = ColyseusManager.Instance.CreateClient(endpoint);
         JoinLobbyRoom();
@@ -139,8 +139,8 @@ public class ColyseusClient : MonoBehaviour
         room.State.players.OnRemove += OnPlayerRemove;
         room.State.lights.OnChange += OnLightsChange;
         room.State.doors.OnChange += OnDoorsChange;
-        room.State.ball.OnChange += OnBallChange;
-
+        room.State.balls.OnAdd+= OnBallAdd;
+        room.State.balls.OnRemove += OnBallRemove;
         room.OnLeave += (code) => Debug.Log("ROOM: ON LEAVE");
         room.OnError += (code, message) => Debug.LogError("ERROR, code =>" + code + ", message => " + message);
     }
@@ -231,26 +231,35 @@ public class ColyseusClient : MonoBehaviour
         Debug.Log("Doors changed " + (bool)(changes[0].Value));
         gameManager.DoorsChanged((bool)(changes[0].Value));
     }
-    void OnBallChange(List<Colyseus.Schema.DataChange> changes)
+    void OnBallAdd(BallData bd, string id)
+    {
+        gameManager.SpawnBall(id, bd);
+        bd.OnChange += (List<Colyseus.Schema.DataChange> changes) => OnBallChange(changes, id);
+    }
+    void OnBallRemove(BallData bd, string id)
+    {
+        gameManager.RemoveBall(id);
+    }
+    void OnBallChange(List<Colyseus.Schema.DataChange> changes, string id)
     {
         for (int i = 0; i < changes.Count; i++)
         {
             if (changes[i].Field == "owner")
             {
                 Debug.Log("Ball owner changed");
-                gameManager.BallOwnerChanged((string)changes[i].Value);
+                gameManager.BallOwnerChanged(id, (string)changes[i].Value);
             }
             else if (changes[i].Field == "position")
             {
                 Vect3 pos = (Vect3)changes[i].Value;
                 //Debug.Log("Ball changed " + pos.x + " " + pos.y + " " + pos.z);
-                gameManager.BallMoved(new Vector3(pos.x, pos.y, pos.z));
+                gameManager.BallMoved(id, new Vector3(pos.x, pos.y, pos.z));
             }
             else if (changes[i].Field == "rotation")
             {
                 Quat rot = (Quat)changes[i].Value;
                 //Debug.Log("Ball changed " + rot.x + " " + rot.y + " " + rot.z + " " + rot.w);
-                gameManager.BallRotated(new Quaternion(rot.x, rot.y, rot.z, rot.w));
+                gameManager.BallRotated(id, new Quaternion(rot.x, rot.y, rot.z, rot.w));
             }
         }
     }

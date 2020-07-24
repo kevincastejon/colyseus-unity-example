@@ -67,6 +67,8 @@
     <Compile Include="Assets\Scripts\Game\entities\Avatar.cs" />
     <Compile Include="Assets\Scripts\Game\entities\Player.cs" />
     <Compile Include="Assets\Scripts\Game\props\Ball.cs" />
+    <Compile Include="Assets\Scripts\Game\props\BallDestroyer.cs" />
+    <Compile Include="Assets\Scripts\Game\props\BallSpawner.cs" />
     <Compile Include="Assets\Scripts\Game\props\Door.cs" />
     <Compile Include="Assets\Scripts\Game\props\LightSwitch.cs" />
     <Compile Include="Assets\Scripts\Network\ColyseusClient.cs" />

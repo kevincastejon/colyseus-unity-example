@@ -8,36 +8,40 @@ public class AvatarMoveEvent : UnityEvent<Vector3, Quaternion> { };
 public class AvatarEmoteEvent : UnityEvent<int> { };
 public class GameManager : MonoBehaviour
 {
-    public GameObject computerPrefab;
     public GameObject playerPrefab;
+    public GameObject ballPrefab;
+
     public AvatarMoveEvent onAvatarMove = new AvatarMoveEvent();
     public AvatarEmoteEvent onAvatarEmote = new AvatarEmoteEvent();
     [HideInInspector]
     public UnityEvent onAvatarInteract = new UnityEvent();
 
     private GameObject entitiesContainer;
+    private GameObject propsContainer;
     private Avatar avatar;
     private readonly Dictionary<string, Player> players = new Dictionary<string, Player>();
     private LightSwitch lightSwitch;
-    private readonly List<Door> doors = new List<Door>();
-    private Ball ball;
+    private readonly List<Door> door = new List<Door>();
+    private BallSpawner ballSpawner;
+    private BallDestroyer ballDestroyer;
+    private readonly Dictionary<string, Ball> balls = new Dictionary<string, Ball>();
     private readonly float sendInterval = 50 / 1000f;
     private float sendTimer = 0f;
+
 
     // Start is called before the first frame update
     void Start()
     {
         entitiesContainer = transform.Find("Entities").gameObject;
+        propsContainer = transform.Find("Props").gameObject;
         avatar = entitiesContainer.transform.Find("Avatar").GetComponent<Avatar>();
-        lightSwitch = transform.Find("Props").Find("LightSwitch").GetComponent<LightSwitch>();
-        doors.Add(transform.Find("Props").Find("Doors").Find("DoorLeft").GetComponent<Door>());
-        doors.Add(transform.Find("Props").Find("Doors").Find("DoorRight").GetComponent<Door>());
-        ball = transform.Find("Props").Find("Ball").GetComponent<Ball>();
-
-        Quaternion q = new Quaternion(0,1,0,0);
-        Vector3 v = new Vector3(0,0,1);
-        //Debug.Log(q*v);
-
+        lightSwitch = propsContainer.transform.Find("LightSwitch").GetComponent<LightSwitch>();
+        door.Add(propsContainer.transform.Find("Doors").Find("DoorLeft").GetComponent<Door>());
+        door.Add(propsContainer.transform.Find("Doors").Find("DoorRight").GetComponent<Door>());
+        ballSpawner = propsContainer.transform.Find("BallSpawner").GetComponent<BallSpawner>();
+        ballDestroyer = propsContainer.transform.Find("BallDestroyer").GetComponent<BallDestroyer>();
+        LeanTween.init(800);
+        avatar.transform.position = Vector3.zero;
     }
 
     // Update is called once per frame
@@ -135,16 +139,34 @@ public class GameManager : MonoBehaviour
     }
     public void DoorsChanged(bool value)
     {
-        if (doors[0].GetState() != value)
+        if (door[0].GetState() != value)
         {
-            for (int i = 0; i < doors.Count; i++)
+            for (int i = 0; i < door.Count; i++)
             {
-                doors[i].SetState(value);
+                door[i].SetState(value);
             }
         }
     }
-    public void BallOwnerChanged(string playerId)
+    public void SpawnBall(string id, BallData bd)
     {
+        Ball newBall = Instantiate(ballPrefab, propsContainer.transform).GetComponent<Ball>();
+        newBall.transform.position = new Vector3(bd.position.x,bd.position.y,bd.position.z);
+        newBall.transform.rotation = new Quaternion(bd.rotation.x, bd.rotation.y, bd.rotation.z, bd.rotation.w);
+        newBall.SetPositionTarget(new Vector3(bd.position.x, bd.position.y, bd.position.z));
+        newBall.SetRotationTarget(new Quaternion(bd.rotation.x, bd.rotation.y, bd.rotation.z, bd.rotation.w));
+        balls.Add(id,newBall);
+        ballSpawner.PlaySpawnSound();
+    }
+    public void RemoveBall(string id)
+    {
+        Ball removedBall = balls[id];
+        Destroy(removedBall.gameObject);
+        players.Remove(id);
+        ballDestroyer.BallDestroyed();
+    }
+    public void BallOwnerChanged(string id, string playerId)
+    {
+        Ball ball = balls[id];
         if (playerId != "")
         {
             if (players.ContainsKey(playerId))
@@ -158,15 +180,24 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            if (ball.transform.parent == avatar.transform)
+            {
+                avatar.PlayThrowBallSound();
+            } else
+            {
+                ball.transform.parent.GetComponent<Player>().PlayThrowBallSound();
+            }
             ball.SetOwner(null);
         }
     }
-    public void BallMoved(Vector3 position)
+    public void BallMoved(string id, Vector3 position)
     {
+        Ball ball = balls[id];
         ball.SetPositionTarget(position);
     }
-    public void BallRotated(Quaternion rotation)
+    public void BallRotated(string id, Quaternion rotation)
     {
+        Ball ball = balls[id];
         ball.SetRotationTarget(rotation);
     }
 }

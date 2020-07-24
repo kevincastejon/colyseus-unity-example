@@ -16,8 +16,5 @@ public class PlayerData : EntityData {
 
 	[Type(4, "uint8")]
 	public uint emote = 0;
-
-	[Type(5, "string")]
-	public string msg = "";
 }
 
