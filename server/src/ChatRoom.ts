@@ -2,6 +2,7 @@ import {Room, Client, generateId} from 'colyseus';
 import {State, PlayerData, BallData, Vect3, Quat} from './Schemas';
 import {World, Body, Vec3, Quaternion, Sphere, Plane, Material, ContactMaterial} from 'cannon-es';
 
+// Some type definitions for TypeScript
 class PlayerInput {
   position: Vect3;
   rotation: Quat;
@@ -14,7 +15,7 @@ class Area {
   minRY: number;
   maxRY: number;
 
-  constructor(minX: number, maxX: number, minZ: number, maxZ: number, minRY: number=-(Math.PI/180), maxRY: number=(Math.PI/180)) {
+  constructor(minX: number, maxX: number, minZ: number, maxZ: number, minRY: number=-Math.PI, maxRY: number=Math.PI) {
     this.minX=minX;
     this.maxX=maxX;
     this.minZ=minZ;
@@ -23,9 +24,11 @@ class Area {
     this.maxRY=maxRY;
   }
 }
-type SphereMap = {
+class SphereMap {
     [name: string]: Body
 };
+
+// Setup some locations for interactions and physic world
 const ballTakeDistance: number = 2;
 const lightSwitchArea: Area = new Area(-21.5, -18.5, 6, 8, (Math.PI/180)*35, (Math.PI/180)*145);
 const doorArea: Area = new Area(-38, -32, 1, 6.5);

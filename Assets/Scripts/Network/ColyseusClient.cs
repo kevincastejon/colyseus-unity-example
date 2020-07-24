@@ -63,7 +63,8 @@ public class ColyseusClient : MonoBehaviour
 
     void Connect()
     {
-        string endpoint = "ws://vps735892.ovh.net:2567";
+        string endpoint = "ws://localhost:2567";
+        //string endpoint = "ws://vps735892.ovh.net:2567";
         Debug.Log("Connecting to " + endpoint);
         client = ColyseusManager.Instance.CreateClient(endpoint);
         JoinLobbyRoom();
