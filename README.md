@@ -6,7 +6,7 @@ An example of using Colyseus.io nodejs server along with a Unity3D client
 ## Overview
 [Colyseus.io](https://colyseus.io/) is nodejs game server library made by [Endel](https://www.patreon.com/endel), it comes with many clients including a Unity3D one.
 
-This repo is an example on how to use Colyseus server-side and Unity3d client-side.
+This repo is an example on how to use Colyseus server-side and Unity3d client-side. It synchronizes players positions/rotations into a small level, allows interactions like player's emotes, opening/closing doors, switching lights on/off, spawning/destroying/throwing balls and offers networked physics for these balls. Interactions are done by pressing the "E" key.
 
 ### Live Demo
 [Try it online here](https://kevincastejon.github.io/colyseus-unity-example/)
