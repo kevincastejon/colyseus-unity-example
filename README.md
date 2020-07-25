@@ -14,7 +14,7 @@ This repo is an example on how to use Colyseus server-side and Unity3d client-si
 ### Non-autoritative movements
 As Endel stated in [this presentation](https://docs.google.com/presentation/d/e/2PACX-1vSjJtmU-SIkng_bFQ5z1000M6nPSoAoQL54j0Y_Cbg7R5tRe9FXLKaBmcKbY_iyEpnMqQGDjx_335QJ/embed?start=false&loop=false&delayms=3000&slide=id.p), a game server should be fully autoritative.
 
-In this example the player's movement are not, because it would have take to "convert" all the walls, floors, et other colliders from the Unity level design, into CannonJS bodies.
+In this example the player's movement are not, because it would have take to "convert" all the walls, floors, and other colliders from the Unity level design, into CannonJS bodies.
 
 I had no time for that heavy work, so the players do not send their inputs, instead they will send their position/rotation, and the server will update it's own state.
 
