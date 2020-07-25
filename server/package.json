@@ -1,7 +1,7 @@
 {
-  "name": "colyseus-unity-example-Chat",
+  "name": "colyseus-unity-example",
   "version": "1.0.0",
-  "description": "Sample game using Colyseus.io server and Unity3D client",
+  "description": "An example of using Colyseus.io nodejs server along with a Unity3D client",
   "main": "lib/index.js",
   "scripts": {
     "start": "ts-node ./index.ts",
@@ -12,9 +12,9 @@
   "author": "",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/colyseus/create-colyseus/issues"
+    "url": "https://github.com/kevincastejon/colyseus-unity-example/issues"
   },
-  "homepage": "https://github.com/colyseus/create-colyseus#readme",
+  "homepage": "https://github.com/kevincastejon/colyseus-unity-example",
   "devDependencies": {
     "@colyseus/loadtest": "^0.13.1",
     "@types/cors": "^2.8.6",
