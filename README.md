@@ -1,10 +1,15 @@
 # colyseus-unity-example
 An example of using Colyseus.io nodejs server along with a Unity3D client
 
+!! ISSUE !! Currently when the game is launched only the already created rooms will be visible on the room list, if a room is created by another player AFTER YOUR OWN INSTANCE OF THE GAME IS LAUNCHED it won't appear and will throw an error. Waiting for Endel's help to fix that ^^
+
 ## Overview
 [Colyseus.io](https://colyseus.io/) is nodejs game server library made by [Endel](https://www.patreon.com/endel), it comes with many clients including a Unity3D one.
 
 This repo is an example on how to use Colyseus server-side and Unity3d client-side.
+
+### Live Demo
+[Try it online here](https://kevincastejon.github.io/colyseus-unity-example/)
 
 ### Non-autoritative movements
 As Endel stated in [this presentation](https://docs.google.com/presentation/d/e/2PACX-1vSjJtmU-SIkng_bFQ5z1000M6nPSoAoQL54j0Y_Cbg7R5tRe9FXLKaBmcKbY_iyEpnMqQGDjx_335QJ/embed?start=false&loop=false&delayms=3000&slide=id.p), a game server should be fully autoritative.
