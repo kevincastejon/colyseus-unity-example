@@ -1,6 +1,6 @@
 {
-  "name": "colyseus-unity-example",
-  "version": "1.0.0",
+  "name": "colyseus-unity-example-server",
+  "version": "0.1.0",
   "description": "An example of using Colyseus.io nodejs server along with a Unity3D client",
   "main": "lib/index.js",
   "scripts": {
