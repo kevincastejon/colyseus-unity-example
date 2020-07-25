@@ -25,7 +25,7 @@ Ps : I'm currently thinking of making a Unity plugin which would automatically c
 ### Autoritative interactions
 The interactions (players pressing "E" key) are fully autoritative. It means that the players won't send a "I'm opening that door" message, rather they will send unique "I'm pressing E" message and the server will have to handle it by checking player's current position/rotation relative into the world and eventually executes some actions/modify it's state.
 
-(eg: the player sent "interaction" message, its position is in front of the door, so the server will set its 'door' state to "opened" or "closed")
+(eg: the player sent "interaction" message, its position is in front of the door, so the server will set the 'door' state to "opened" or "closed")
 
 ## Installation
 ```
