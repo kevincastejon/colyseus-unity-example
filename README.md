@@ -10,6 +10,8 @@ This repo is an example on how to use Colyseus server-side and Unity3d client-si
 
 ### Live Demo
 [Try it online here](https://kevincastejon.github.io/colyseus-unity-example/)
+### Download and try the windows build
+[Download here](https://github.com/kevincastejon/colyseus-unity-example/releases/download/0.1/colyseus-unity-example.rar)
 
 ### Non-autoritative movements
 As Endel stated in [this presentation](https://docs.google.com/presentation/d/e/2PACX-1vSjJtmU-SIkng_bFQ5z1000M6nPSoAoQL54j0Y_Cbg7R5tRe9FXLKaBmcKbY_iyEpnMqQGDjx_335QJ/embed?start=false&loop=false&delayms=3000&slide=id.p), a game server should be fully autoritative.
